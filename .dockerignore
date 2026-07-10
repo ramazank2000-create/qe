@@ -1,0 +1,6 @@
+manuels/
+.cursor/
+.git/
+jobs_qe/
+*.md
+_extract_tmp/

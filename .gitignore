@@ -1,0 +1,35 @@
+# QE distribution (provide locally — not in git)
+softwares/*.tar
+softwares/*.tar.gz
+softwares/*.tgz
+
+# Local manuals (large PDFs)
+manuels/
+
+# Calculation outputs (bind-mounted at runtime)
+jobs_qe/**/tmp/
+jobs_qe/**/*.out
+jobs_qe/**/espresso.pwo
+jobs_qe/**/espresso.pwi
+jobs_qe/**/espresso.err
+jobs_qe/**/*.UPF
+jobs_qe/**/si.ase.in
+
+# Docker / logs
+*.log
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Cursor local state
+.cursor/
