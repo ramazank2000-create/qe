@@ -115,7 +115,6 @@ import numpy as np
 save = Path("tmp/silicon.save")
 assert save.is_dir(), save
 
-# BoltzTraP2 QE loader
 from BoltzTraP2 import dft, sphere, fite, bandlib
 
 data = dft.DFTData(str(save), derivatives=False)
@@ -123,13 +122,17 @@ equivalences = sphere.get_equivalences(data.atoms, data.magmom, max(200, 3 * len
 lattvec = data.get_lattvec()
 coeffs = fite.fitde3D(data, equivalences)
 ebands, vvband, _cRTA = fite.getBTPbands(equivalences, coeffs, lattvec, curvature=False)
-dose, dos, _ids, ef, vvdos, _cdos = bandlib.BTPDOS(ebands, vvband, npts=1200)
-idx = int(np.argmin(np.abs(dose - ef)))
-# vvDOS trace ~ conductivity-related kernel at EF
-sigma_kernel = float(np.trace(vvdos[:, :, idx])) if vvdos.ndim == 3 else float(np.sum(vvdos[..., idx]))
-print(f"BOLTZTRAP2_EF_Ry={ef:.8f}")
+# BoltzTraP2 ≥26: BTPDOS returns (e, dos, vvdos, cdos)
+dose, dos, vvdos, _cdos = bandlib.BTPDOS(ebands, vvband, npts=1200)
+mu = bandlib.solve_for_mu(dose, dos, data.nelect, 0.0, refine=True)
+idx = int(np.argmin(np.abs(dose - mu)))
+# Si is gapped → DOS(μ)≈0; also report vvDOS slightly above μ (n-type probe)
+idx_n = int(np.argmin(np.abs(dose - (mu + 0.05))))
+def _tr(i):
+    return float(np.trace(vvdos[:, :, i])) if vvdos.ndim == 3 else float(np.sum(vvdos[..., i]))
+print(f"BOLTZTRAP2_EF_Ry={mu:.8f}")
 print(f"BOLTZTRAP2_DOS_AT_EF={float(dos[idx]):.6e}")
-print(f"BOLTZTRAP2_TRANSPORT={sigma_kernel:.6e}")
+print(f"BOLTZTRAP2_TRANSPORT={_tr(idx_n):.6e}")
 print("BoltzTraP2 interpolate/integrate (in-memory) OK", flush=True)
 PY
 
