@@ -72,13 +72,18 @@ if [ -n "${ELPA_INC}" ] && [ -n "${ELPA_LIB}" ]; then
   )
 fi
 
-# HDF5: Debian/Ubuntu openmpi layout is split include/lib — pass both if needed
+# HDF5: Ubuntu multiarch layout lacks a unified prefix — synthesize one.
+HDF5_SYNTH=/usr/local/hdf5-openmpi
 if [ -d /usr/lib/x86_64-linux-gnu/hdf5/openmpi ] && [ -d /usr/include/hdf5/openmpi ]; then
-  CFG_ARGS+=(
-    --with-hdf5=/usr/lib/x86_64-linux-gnu/hdf5/openmpi
-    --with-hdf5-include=/usr/include/hdf5/openmpi
-    --with-hdf5-libs="-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz"
-  )
+  rm -rf "${HDF5_SYNTH}"
+  mkdir -p "${HDF5_SYNTH}/lib" "${HDF5_SYNTH}/include" "${HDF5_SYNTH}/bin"
+  ln -sfn /usr/lib/x86_64-linux-gnu/hdf5/openmpi/* "${HDF5_SYNTH}/lib/" || true
+  ln -sfn /usr/include/hdf5/openmpi/* "${HDF5_SYNTH}/include/" || true
+  command -v h5pcc.openmpi >/dev/null && ln -sfn "$(command -v h5pcc.openmpi)" "${HDF5_SYNTH}/bin/h5cc"
+  command -v h5pfc.openmpi >/dev/null && ln -sfn "$(command -v h5pfc.openmpi)" "${HDF5_SYNTH}/bin/h5fc"
+  command -v h5pcc.openmpi >/dev/null && ln -sfn "$(command -v h5pcc.openmpi)" "${HDF5_SYNTH}/bin/h5pcc"
+  export PATH="${HDF5_SYNTH}/bin:${PATH}"
+  CFG_ARGS+=(--with-hdf5="${HDF5_SYNTH}")
 elif [ -n "${HDF5_ROOT}" ]; then
   CFG_ARGS+=(--with-hdf5="${HDF5_ROOT}")
 else
