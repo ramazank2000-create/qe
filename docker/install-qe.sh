@@ -5,9 +5,10 @@ set -euo pipefail
 QE_ROOT="${QE_ROOT:-/opt/qe-7.6}"
 OPENMPI_PREFIX="${OPENMPI_PREFIX:-/usr/local/openmpi-4.1.8}"
 ELPA_PREFIX="${ELPA_PREFIX:-/usr/local/elpa-2024.05.001}"
+HDF5_PREFIX="${HDF5_PREFIX:-/usr/local/hdf5-1.14.5}"
 
-export PATH="${OPENMPI_PREFIX}/bin:${PATH}"
-export LD_LIBRARY_PATH="${OPENMPI_PREFIX}/lib:${ELPA_PREFIX}/lib:${LD_LIBRARY_PATH:-}"
+export PATH="${HDF5_PREFIX}/bin:${OPENMPI_PREFIX}/bin:${PATH}"
+export LD_LIBRARY_PATH="${HDF5_PREFIX}/lib:${OPENMPI_PREFIX}/lib:${ELPA_PREFIX}/lib:${LD_LIBRARY_PATH:-}"
 export LC_ALL=C
 export FC=mpif90 F90=mpif90 CC=mpicc CXX=mpicxx
 
@@ -21,33 +22,16 @@ if [ -d "${QE_ROOT}/external/wannier90" ]; then
   touch "${QE_ROOT}/external/wannier90/.git"
 fi
 
-# ELPA OpenMP builds libelpa_openmp.so; modules live under include/elpa-*/modules
+# ELPA OpenMP builds libelpa_openmp; modules under include/elpa*/modules
 ELPA_INC="$(ls -d "${ELPA_PREFIX}"/include/elpa*/modules 2>/dev/null | head -1 || true)"
 ELPA_LIB="$(ls "${ELPA_PREFIX}"/lib/libelpa_openmp.so "${ELPA_PREFIX}"/lib/libelpa.so \
   "${ELPA_PREFIX}"/lib/libelpa_openmp.a "${ELPA_PREFIX}"/lib/libelpa.a 2>/dev/null | head -1 || true)"
-# API year 2018 covers ELPA releases 2018.11+
 ELPA_API_YEAR=2018
-
-# HDF5 parallel (Ubuntu libhdf5-openmpi-dev)
-HDF5_ROOT=""
-for c in /usr/lib/x86_64-linux-gnu/hdf5/openmpi /usr; do
-  if [ -f "${c}/include/hdf5.h" ] || [ -f /usr/include/hdf5/openmpi/hdf5.h ]; then
-    HDF5_ROOT="$c"
-    break
-  fi
-done
-# Prefer h5pcc wrapper on PATH
-if command -v h5pcc.openmpi >/dev/null 2>&1 && [ ! -e /usr/local/bin/h5pcc ]; then
-  ln -sfn "$(command -v h5pcc.openmpi)" /usr/local/bin/h5pcc
-fi
-if command -v h5pfc.openmpi >/dev/null 2>&1 && [ ! -e /usr/local/bin/h5fc ]; then
-  ln -sfn "$(command -v h5pfc.openmpi)" /usr/local/bin/h5fc
-fi
 
 export BLAS_LIBS="-lopenblas"
 export LAPACK_LIBS="-lopenblas"
 export SCALAPACK_LIBS="-lscalapack-openmpi -lopenblas"
-export LDFLAGS="-L${OPENMPI_PREFIX}/lib -L${ELPA_PREFIX}/lib -L/usr/lib/x86_64-linux-gnu ${LDFLAGS:-}"
+export LDFLAGS="-L${HDF5_PREFIX}/lib -L${OPENMPI_PREFIX}/lib -L${ELPA_PREFIX}/lib -L/usr/lib/x86_64-linux-gnu ${LDFLAGS:-}"
 
 CFG_ARGS=(
   MPIF90=mpif90
@@ -58,6 +42,7 @@ CFG_ARGS=(
   --with-scalapack=yes
   --with-libxc=yes
   --with-libxc-prefix=/usr
+  --with-hdf5="${HDF5_PREFIX}"
   BLAS_LIBS="${BLAS_LIBS}"
   LAPACK_LIBS="${LAPACK_LIBS}"
   SCALAPACK_LIBS="${SCALAPACK_LIBS}"
@@ -70,24 +55,6 @@ if [ -n "${ELPA_INC}" ] && [ -n "${ELPA_LIB}" ]; then
     --with-elpa-lib="${ELPA_LIB}"
     --with-elpa-version="${ELPA_API_YEAR}"
   )
-fi
-
-# HDF5: Ubuntu multiarch layout lacks a unified prefix — synthesize one.
-HDF5_SYNTH=/usr/local/hdf5-openmpi
-if [ -d /usr/lib/x86_64-linux-gnu/hdf5/openmpi ] && [ -d /usr/include/hdf5/openmpi ]; then
-  rm -rf "${HDF5_SYNTH}"
-  mkdir -p "${HDF5_SYNTH}/lib" "${HDF5_SYNTH}/include" "${HDF5_SYNTH}/bin"
-  ln -sfn /usr/lib/x86_64-linux-gnu/hdf5/openmpi/* "${HDF5_SYNTH}/lib/" || true
-  ln -sfn /usr/include/hdf5/openmpi/* "${HDF5_SYNTH}/include/" || true
-  command -v h5pcc.openmpi >/dev/null && ln -sfn "$(command -v h5pcc.openmpi)" "${HDF5_SYNTH}/bin/h5cc"
-  command -v h5pfc.openmpi >/dev/null && ln -sfn "$(command -v h5pfc.openmpi)" "${HDF5_SYNTH}/bin/h5fc"
-  command -v h5pcc.openmpi >/dev/null && ln -sfn "$(command -v h5pcc.openmpi)" "${HDF5_SYNTH}/bin/h5pcc"
-  export PATH="${HDF5_SYNTH}/bin:${PATH}"
-  CFG_ARGS+=(--with-hdf5="${HDF5_SYNTH}")
-elif [ -n "${HDF5_ROOT}" ]; then
-  CFG_ARGS+=(--with-hdf5="${HDF5_ROOT}")
-else
-  CFG_ARGS+=(--with-hdf5=yes)
 fi
 
 ./configure "${CFG_ARGS[@]}" || {
