@@ -14,17 +14,19 @@ mkdir -p "${WORKDIR}"
 cd "${WORKDIR}"
 
 TARBALL="hdf5-${HDF5_VERSION}.tar.gz"
-URL="https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION//./_}/hdf5-${HDF5_VERSION}.tar.gz"
-URL2="https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_${HDF5_VERSION//./_}.tar.gz"
+# Tag form: 1.14.5 → hdf5_1.14.5 (underscores only between major parts for GitHub releases)
+TAG="hdf5_${HDF5_VERSION}"
+URL="https://github.com/HDFGroup/hdf5/releases/download/${TAG}/hdf5-${HDF5_VERSION}.tar.gz"
 
-echo "=== Downloading HDF5 ${HDF5_VERSION} ==="
-if ! wget -q "${URL}" -O "${TARBALL}"; then
-  wget -q "${URL2}" -O "${TARBALL}"
+echo "=== Downloading HDF5 ${HDF5_VERSION} from ${URL} ==="
+if command -v curl >/dev/null 2>&1; then
+  curl -fsSL -o "${TARBALL}" "${URL}"
+else
+  wget -q --content-disposition -O "${TARBALL}" "${URL}"
 fi
 tar -xzf "${TARBALL}"
 SRC="$(find . -maxdepth 1 -type d \( -name 'hdf5-*' -o -name 'hdf5_*' \) | head -1)"
 cd "$SRC"
-# GitHub source tag archive may need autogen; release tarball has configure
 if [ ! -x ./configure ]; then
   if [ -x ./autogen.sh ]; then ./autogen.sh; else autoreconf -i; fi
 fi
