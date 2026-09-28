@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-QE_ROOT="${QE_ROOT:-/opt/qe-7.5}"
+QE_ROOT="${QE_ROOT:-/opt/qe-7.6}"
 USER_HOME="/home/qe"
 
 mkdir -p "$USER_HOME/jobs_qe" "$USER_HOME/scratch"
@@ -10,15 +10,19 @@ chown -R qe:qe "$USER_HOME"
 cat > "$USER_HOME/.bashrc" <<EOF
 # Quantum ESPRESSO user environment
 export QE_ROOT=${QE_ROOT}
-export ESPRESSO_PSEUDO=\${QE_ROOT}/pseudo
+export ESPRESSO_PSEUDO=\${ESPRESSO_PSEUDO:-\${QE_ROOT}/pseudo}
 export PATH=\${QE_ROOT}/bin:/docker:\${PATH}
 export SCRATCH=${USER_HOME}/scratch
-export OMP_NUM_THREADS=\${OMP_NUM_THREADS:-4}
+# MPI codes: default 1 OpenMP thread; raise for hybrid runs.
+export OMP_NUM_THREADS=\${OMP_NUM_THREADS:-1}
 export LC_ALL=C
+export OMPI_MCA_btl_vader_single_copy_mechanism=none
+export OMPI_MCA_hwloc_base_binding_policy=none
 
-# MPI parallel launch (edit -np for your run)
-export PARA_PREFIX="mpirun -np 2"
-export PARA_POSTFIX="-nk 1 -nd 1 -nb 1 -nt 1"
+# Parallel launch prefix — set -np yourself (no hardcoded process count).
+# Example: PARA_PREFIX="mpirun -np 4" PARA_POSTFIX="-nk 2"
+export PARA_PREFIX="\${PARA_PREFIX:-mpirun}"
+export PARA_POSTFIX="\${PARA_POSTFIX:--nk 1}"
 
 alias cdj='cd ${USER_HOME}/jobs_qe'
 alias qe-pw='pw.x'

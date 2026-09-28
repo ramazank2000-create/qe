@@ -1,8 +1,8 @@
-# Quantum ESPRESSO 7.5 — Yetenekler ve Modüller
+# Quantum ESPRESSO 7.6 — Yetenekler ve Modüller
 
-Bu belge, projedeki Docker imajında kurulu **Quantum ESPRESSO 7.5** paketinin bilimsel ve teknik yeteneklerini özetler.
+Bu belge, projedeki Docker imajında kurulu **Quantum ESPRESSO 7.6** paketinin bilimsel ve teknik yeteneklerini özetler.
 
-**Sürüm:** 7.5.0  
+**Sürüm:** 7.6.0  
 **Kurulum:** Docker container (`qe-qe:latest`)  
 **Lisans:** GNU GPL v2 (açık kaynak)  
 **Resmi site:** https://www.quantum-espresso.org/
@@ -376,7 +376,7 @@ pw.x (SCF) → hp.x
 Container içinde **80+** `.x` programı mevcuttur. Tam liste:
 
 ```powershell
-docker compose run --rm qe bash -lc "ls /opt/qe-7.5/bin/*.x | xargs -n1 basename | sort"
+docker compose run --rm qe bash -lc "ls /opt/qe-7.6/bin/*.x | xargs -n1 basename | sort"
 ```
 
 Ana programlar: `pw.x`, `ph.x`, `pp.x`, `cp.x`, `neb.x`, `bands.x`, `dos.x`, `hp.x`, `kcw.x`, `gww.x`, `pwcond.x`, `xspectra.x`, `wannier90.x`, `ld1.x`, `turbo_*`, `postahc.x`, `pioud.x`
@@ -400,4 +400,4 @@ Ana programlar: `pw.x`, `ph.x`, `pp.x`, `cp.x`, `neb.x`, `bands.x`, `dos.x`, `hp
 
 ## Özet
 
-Quantum ESPRESSO 7.5, **katı hâl fizik ve malzeme bilimi** araştırmaları için kapsamlı bir DFT platformudur. Bu Docker kurulumu; elektronik yapı, geometri optimizasyonu, fononlar, spektroskopi, taşınım, reaksiyon yolları ve gelişmiş korelasyon düzeltmelerini **MPI paralel** ortamda çalıştırmaya hazırdır.
+Quantum ESPRESSO 7.6, **katı hâl fizik ve malzeme bilimi** araştırmaları için kapsamlı bir DFT platformudur. Bu Docker kurulumu; elektronik yapı, geometri optimizasyonu, fononlar, spektroskopi, taşınım, reaksiyon yolları ve gelişmiş korelasyon düzeltmelerini **MPI paralel** ortamda çalıştırmaya hazırdır.

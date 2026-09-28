@@ -1,11 +1,18 @@
 #!/bin/bash
 set -euo pipefail
 
-QE_ROOT="${QE_ROOT:-/opt/qe-7.5}"
+QE_ROOT="${QE_ROOT:-/opt/qe-7.6}"
 export LC_ALL=C
 export PATH="${QE_ROOT}/bin:${PATH}"
-export OMPI_ALLOW_RUN_AS_ROOT=1
-export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+export OMPI_MCA_btl_vader_single_copy_mechanism=none
+export OMPI_MCA_hwloc_base_binding_policy=none
+export OMP_NUM_THREADS=1
+# Build-time tests may run as root in Dockerfile; never export OMPI_ALLOW_RUN_AS_ROOT.
+# Use --allow-run-as-root only for this build-time check if uid==0.
+MPIRUN=(mpirun)
+if [ "$(id -u)" -eq 0 ]; then
+  MPIRUN=(mpirun --allow-run-as-root)
+fi
 
 echo "=== QE build verification ==="
 
@@ -22,7 +29,7 @@ which mpirun
 mpirun --version | head -1
 
 echo "=== pw.x version ==="
-mpirun -np 1 pw.x -v 2>&1 | head -3 || true
+"${MPIRUN[@]}" -np 1 pw.x -v 2>&1 | head -3 || true
 
 echo "=== Quick Si SCF test (1 MPI rank) ==="
 TEST_WORK=/tmp/qe_build_test
@@ -54,7 +61,7 @@ K_POINTS {gamma}
 EOF
 
 cd "${TEST_WORK}"
-mpirun -np 1 pw.x -nk 1 < si.scf.in > si.scf.out
+"${MPIRUN[@]}" -np 1 pw.x -nk 1 < si.scf.in > si.scf.out
 if ! grep -q "convergence has been achieved" si.scf.out; then
     echo "FAIL: Si SCF did not converge"
     tail -40 si.scf.out
@@ -63,7 +70,7 @@ fi
 echo "OK: Si SCF converged (1 rank)"
 
 echo "=== Quick Si SCF test (2 MPI ranks) ==="
-mpirun -np 2 pw.x -nk 1 < si.scf.in > si.mpi.out
+"${MPIRUN[@]}" -np 2 pw.x -nk 1 < si.scf.in > si.mpi.out
 if ! grep -q "convergence has been achieved" si.mpi.out; then
     echo "FAIL: MPI Si SCF did not converge"
     tail -40 si.mpi.out

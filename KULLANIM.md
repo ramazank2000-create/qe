@@ -1,6 +1,6 @@
-# Quantum ESPRESSO 7.5 Docker Kullanım Kılavuzu
+# Quantum ESPRESSO 7.6 Docker Kullanım Kılavuzu
 
-Bu kılavuz, QE 7.5 Docker imajının kullanımını ve Windows terminalinden job çalıştırmayı açıklar.
+Bu kılavuz, QE 7.6 Docker imajının kullanımını ve Windows terminalinden job çalıştırmayı açıklar.
 
 ## Önemli: `qe.exe` yoktur
 
@@ -17,7 +17,7 @@ Komutları şu yollarla çalıştırırsınız:
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows)
 - Docker Compose v2
-- Kaynak arşivi: `softwares/qe-7.5-ReleasePack.tar.gz`
+- Kaynak arşivi: `softwares/q-e-qe-7.6.tar.gz`
 
 ## Proje yapısı
 
@@ -34,7 +34,7 @@ qe/
 │   └── qe_ase/
 ├── requirements.txt         # Python bağımlılıkları (ASE)
 ├── softwares/
-│   └── qe-7.5-ReleasePack.tar.gz
+│   └── q-e-qe-7.6.tar.gz
 └── manuels/                 # resmi PDF kılavuzlar
 ```
 
@@ -191,7 +191,7 @@ write_pw_input("si.in", atoms, input_data=input_data, pseudopotentials=pseudopot
 
 calc = make_espresso_calc(
     atoms,
-    pseudo_dir="/opt/qe-7.5/pseudo",
+    pseudo_dir="/opt/qe-7.6/pseudo",
     pseudopotentials=pseudopotentials,
     input_data=input_data,
     kpts=(4, 4, 4),
@@ -218,7 +218,7 @@ Ortam değişkenleri:
 |----------|------------|--------|
 | `QE_MPI_NP` | `1` | MPI process sayısı |
 | `QE_MPI_NK` | `1` | k-point pool sayısı |
-| `QE_ROOT` | `/opt/qe-7.5` | QE kurulum dizini |
+| `QE_ROOT` | `/opt/qe-7.6` | QE kurulum dizini |
 | `ESPRESSO_PSEUDO` | `$QE_ROOT/pseudo` | Pseudopotansiyel dizini |
 
 ### ASE ile geometri optimizasyonu
@@ -231,7 +231,7 @@ from qe_ase import make_espresso_calc
 atoms = bulk("Si", "diamond", a=5.43)
 atoms.calc = make_espresso_calc(
     atoms,
-    pseudo_dir="/opt/qe-7.5/pseudo",
+    pseudo_dir="/opt/qe-7.6/pseudo",
     pseudopotentials={"Si": "Si.pz-vbc.UPF"},
     input_data={"system": {"ecutwfc": 30.0}},
     kpts=(4, 4, 4),
@@ -252,12 +252,12 @@ LBFGS(atoms).run(fmax=0.05)
 | `neb.x` | NEB geçiş yolu | Çoklu image |
 | `cp.x` | Car-Parrinello MD | `cp.x` input |
 
-Tüm çalıştırılabilir dosyalar: `/opt/qe-7.5/bin/`
+Tüm çalıştırılabilir dosyalar: `/opt/qe-7.6/bin/`
 
 Listelemek için:
 
 ```powershell
-docker compose run --rm qe bash -lc "ls /opt/qe-7.5/bin/*.x | head -20"
+docker compose run --rm qe bash -lc "ls /opt/qe-7.6/bin/*.x | head -20"
 ```
 
 ---
@@ -273,7 +273,7 @@ docker compose run --rm qe bash -lc "ls /opt/qe-7.5/bin/*.x | head -20"
 Pseudopotansiyelleri container'daki hazır kütüphaneden de alabilirsiniz:
 
 ```text
-pseudo_dir = '/opt/qe-7.5/pseudo/'
+pseudo_dir = '/opt/qe-7.6/pseudo/'
 ```
 
 Host'taki `jobs_qe` klasörüne `.UPF` dosyasını kopyalamak genelde daha pratiktir.
@@ -313,16 +313,16 @@ Hibrit kullanım: `N_MPI × OMP_NUM_THREADS` ≈ toplam çekirdek.
 İmajı dışa aktarma (Windows):
 
 ```powershell
-docker save qe-qe:latest -o qe-7.5.tar
+docker save qe-qe:latest -o qe-7.6.tar
 ```
 
 Kümede (Singularity/Apptainer):
 
 ```bash
-singularity build qe-7.5.sif docker-archive://qe-7.5.tar
+singularity build qe-7.6.sif docker-archive://qe-7.6.tar
 
 srun singularity exec --bind /path/to/jobs_qe:/home/qe/jobs_qe \
-  qe-7.5.sif mpirun -np 16 pw.x -nk 4 < si.scf.in > si.scf.out
+  qe-7.6.sif mpirun -np 16 pw.x -nk 4 < si.scf.in > si.scf.out
 ```
 
 ---

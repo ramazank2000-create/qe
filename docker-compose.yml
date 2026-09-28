@@ -2,12 +2,13 @@ services:
   qe:
     build: .
     container_name: qe
+    user: "1000:1000"
     environment:
-      OMP_NUM_THREADS: 4
-      QE_ROOT: /opt/qe-7.5
-      OMPI_ALLOW_RUN_AS_ROOT: 1
-      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+      OMP_NUM_THREADS: 1
+      QE_ROOT: /opt/qe-7.6
+      ESPRESSO_PSEUDO: /opt/qe-7.6/pseudo
       OMPI_MCA_btl_vader_single_copy_mechanism: none
+      OMPI_MCA_hwloc_base_binding_policy: none
     volumes:
       - qe_home:/home/qe
       - ./jobs_qe:/home/qe/jobs_qe
