@@ -31,13 +31,19 @@ cd "elpa-${ELPA_VERSION}"
 
 echo "=== Configuring ELPA ==="
 mkdir -p build && cd build
+# Ubuntu 22.04 mpicc may fail ELPA's SSE3 intrinsic probe; disable SSE kernels.
 ../configure \
   --prefix="${ELPA_PREFIX}" \
   --enable-openmp \
+  --disable-avx \
+  --disable-avx2 \
   --disable-avx512 \
+  --disable-sse \
+  --disable-sse-assembly \
   FC=mpif90 CC=mpicc CXX=mpicxx \
   SCALAPACK_LDFLAGS="-lscalapack-openmpi -lopenblas" \
-  SCALAPACK_FCFLAGS="-I/usr/include"
+  SCALAPACK_FCFLAGS="-I/usr/include" \
+  CFLAGS="-O3" FCFLAGS="-O3"
 
 echo "=== Building ELPA ==="
 make -j"$(nproc)"
