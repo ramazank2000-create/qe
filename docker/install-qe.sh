@@ -31,7 +31,7 @@ ELPA_API_YEAR=2018
 export BLAS_LIBS="-lopenblas"
 export LAPACK_LIBS="-lopenblas"
 export SCALAPACK_LIBS="-lscalapack-openmpi -lopenblas"
-export LDFLAGS="-L${HDF5_PREFIX}/lib -L${OPENMPI_PREFIX}/lib -L${ELPA_PREFIX}/lib -L/usr/lib/x86_64-linux-gnu ${LDFLAGS:-}"
+export LDFLAGS="-fopenmp -L${HDF5_PREFIX}/lib -L${OPENMPI_PREFIX}/lib -L${ELPA_PREFIX}/lib -L/usr/lib/x86_64-linux-gnu ${LDFLAGS:-}"
 
 CFG_ARGS=(
   MPIF90=mpif90
@@ -62,6 +62,11 @@ fi
   tail -100 config.log || true
   exit 1
 }
+
+# Ensure OpenMP is on the link line (user LDFLAGS can drop configure's -fopenmp).
+if ! grep -qE '^LDFLAGS.*-fopenmp' make.inc; then
+  sed -i 's/^LDFLAGS\s*=/LDFLAGS = -fopenmp /' make.inc
+fi
 
 echo "=== make.inc feature check ==="
 grep -E '^DFLAGS|^SCALAPACK_LIBS|^HDF5_LIBS|^LIBXC|^BLAS_LIBS' make.inc || true
